@@ -15,7 +15,7 @@ Build a single-process command-line chat app that:
 2. Streams LLM responses token-by-token to the terminal.
 3. Supports tool calling against two endpoints — `/weather` (fast) and `/research` (3–8s).
 4. Shows a clear pending state while a slow tool call is in flight.
-5. Cancels the in-flight turn on `Ctrl+C` without exiting the app (second `Ctrl+C` at the prompt exits).
+5. Cancels the in-flight turn on `Ctrl+C` without exiting the app (a second `Ctrl+C` at the idle prompt within 2 seconds exits cleanly).
 6. Persists conversation history to disk and can resume prior sessions.
 7. Handles the documented and undocumented quirks of the Elyos API gracefully.
 8. Is comprehensible and extensible — new tools and new LLM providers drop in with localized changes.
@@ -44,7 +44,7 @@ Success is judged on three dimensions per the assignment: **implementation quali
 
 ## 3. Architecture (Approach A — layered async pipeline with a Provider port)
 
-Six modules, one job each. Sizes are estimates that anchor "is this file doing too much?" judgments.
+Five top-level units (`cli/`, `chat/`, `providers/`, `tools/`, `config.py`), each with a single responsibility. Sizes are estimates that anchor "is this file doing too much?" judgments.
 
 ```
 cli/           input loop, rendering, key bindings, spinner
@@ -106,6 +106,9 @@ ChatSession.handle_user_input(text)
       ], return_exceptions=True)
       history.append(tool_results_turn(results))
       # loop back: feed results to provider for the follow-up
+      # hard cap: MAX_TOOL_ITERATIONS = 8 — break with a clear error
+      # to history if exceeded (prevents a misbehaving model from
+      # looping indefinitely on tool calls)
 ```
 
 **Key choices**
