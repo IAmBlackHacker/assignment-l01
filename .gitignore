@@ -8,3 +8,7 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+
+# web-ui
+web-ui/node_modules/
+web-ui/dist/
