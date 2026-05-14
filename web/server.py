@@ -41,6 +41,10 @@ from web.sessions import router as sessions_router  # noqa: E402
 
 app.include_router(sessions_router)
 
+from web.ws_text import router as ws_text_router  # noqa: E402
+
+app.include_router(ws_text_router)
+
 # Routes registered in later tasks via app.include_router / direct decorators.
 
 # Static SPA mount — only if web-ui/dist exists. Vite dev server handles this in dev.

@@ -20,7 +20,9 @@ class AppState:
     def __init__(self):
         self.cfg: Config | None = None
         self.http: ToolHttpClient | None = None
-        self.registry: ToolRegistry | None = None
+        # Eagerly initialised so tests can monkeypatch .registry.dispatch before
+        # the lifespan startup runs (TestClient doesn't always trigger lifespan).
+        self.registry: ToolRegistry = ToolRegistry(http=None)  # type: ignore[arg-type]
 
     async def startup(self):
         self.cfg = Config.from_env()
