@@ -5,7 +5,6 @@ reason or MAX_TOOL_ITERATIONS is reached. Tool calls run in parallel.
 """
 from __future__ import annotations
 import asyncio
-import uuid
 from typing import Protocol
 
 from elyos_chat.chat.cancel import CancelToken
@@ -93,7 +92,18 @@ class ChatSession:
                 cancelled=cancelled,
             ))
 
-            if cancelled or not pending_tools:
+            if cancelled:
+                if pending_tools:
+                    self.history.append(Turn(
+                        role="tool",
+                        tool_results=[
+                            {"id": tc["id"], "name": tc["name"],
+                             "content": {"error": "cancelled by user"}, "is_error": True}
+                            for tc in pending_tools
+                        ],
+                    ))
+                return
+            if not pending_tools:
                 return
 
             # Dispatch tools in parallel.
@@ -122,12 +132,25 @@ class ChatSession:
             if cancel.cancelled():
                 return
 
-        # Max iterations hit.
+        # Max iterations hit. The most recent assistant turn may have pending
+        # tool_use blocks that need matching tool_result entries for history
+        # coherence (otherwise Anthropic/OpenAI reject the replay).
         self.renderer.show_error(f"max tool iterations reached ({self.max_tool_iterations})")
-        self.history.append(Turn(
-            role="tool",
-            tool_results=[{"id": "guard", "name": "session", "content": {"error": f"max tool iterations reached"}, "is_error": True}],
-        ))
+        snap = self.history.snapshot()
+        last_tool_calls = []
+        for t in reversed(snap):
+            if t.role == "assistant":
+                last_tool_calls = list(t.tool_calls)
+                break
+        if last_tool_calls:
+            self.history.append(Turn(
+                role="tool",
+                tool_results=[
+                    {"id": tc["id"], "name": tc["name"],
+                     "content": {"error": "max tool iterations exceeded"}, "is_error": True}
+                    for tc in last_tool_calls
+                ],
+            ))
 
     def _tools_for_provider(self) -> list[dict]:
         name = self.provider.name

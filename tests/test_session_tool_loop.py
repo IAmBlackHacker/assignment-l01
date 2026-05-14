@@ -128,3 +128,42 @@ async def test_max_tool_iterations_breaks_loop(tmp_path):
     assert any("max tool iterations" in (t.content or "") or
                any("max" in str(r) for r in t.tool_results)
                for t in history.snapshot())
+
+    # History must be replay-safe: every assistant tool_call has a matching tool_result.
+    snap = history.snapshot()
+    for i, t in enumerate(snap):
+        if t.role == "assistant" and t.tool_calls:
+            # next turn must be a tool turn with matching ids
+            assert i + 1 < len(snap), "assistant tool_calls must be followed by a tool turn"
+            next_t = snap[i + 1]
+            assert next_t.role == "tool"
+            ids_in_use = {tc["id"] for tc in t.tool_calls}
+            ids_in_results = {r["id"] for r in next_t.tool_results}
+            assert ids_in_use == ids_in_results
+
+
+async def test_cancel_mid_tool_appends_synthetic_tool_results(tmp_path):
+    """If cancelled while tools are pending, history must include matching tool_results
+    so the conversation can be replayed through Anthropic/OpenAI without orphan tool_use blocks."""
+    from tests.conftest import FakeProvider
+
+    provider = FakeProvider(scripts=[[
+        ToolUseStart(tool_use_id="t1", name="weather"),
+        ToolUseEnd(tool_use_id="t1", name="weather", args={"location": "London"}),
+        TurnEnd(reason="cancelled"),
+    ]])
+    history = History.new(tmp_path)
+    renderer = CapturingRenderer()
+    session = ChatSession(provider=provider, registry=build_registry(),
+                         history=history, renderer=renderer)
+    await session.handle_user_input("weather?")
+
+    snap = history.snapshot()
+    # Find the assistant turn with the tool_use, and the matching tool turn.
+    assistant = next(t for t in snap if t.role == "assistant" and t.tool_calls)
+    tool_turn = next((t for t in snap if t.role == "tool"), None)
+    assert tool_turn is not None, "must append synthetic tool turn even on cancel"
+    ids_in_use = {tc["id"] for tc in assistant.tool_calls}
+    ids_in_results = {r["id"] for r in tool_turn.tool_results}
+    assert ids_in_use == ids_in_results, "every pending tool_use must have a matching tool_result"
+    assert all(r["is_error"] for r in tool_turn.tool_results)

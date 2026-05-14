@@ -4,6 +4,7 @@ Quirk handlers should be added here referencing finding IDs from
 docs/api-findings.md once the probe script has run.
 """
 from __future__ import annotations
+import math
 from elyos_chat.chat.cancel import CancelToken
 from elyos_chat.tools.http import ToolHttpClient
 from elyos_chat.tools.registry import ToolSpec
@@ -48,7 +49,6 @@ def _normalise(body: dict) -> dict:
     # cached data that may be many months old, signalled by "cached": true in the body.
     # Surface a staleness_warning so the model can caveat its response.
     if body.get("cached") is True:
-        import math
         age_s = body.get("cache_age_seconds")
         age_days = math.floor(age_s / 86400) if isinstance(age_s, (int, float)) else None
         body = {

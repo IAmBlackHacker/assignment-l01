@@ -41,30 +41,35 @@ class GeminiProvider:
                 contents=contents,
                 config=config,
             )
-            stop_reason = "stop"
-            tool_idx = 0
-            async for chunk in stream:
-                if cancel.cancelled():
-                    yield TurnEnd(reason="cancelled")
-                    return
-                for cand in (chunk.candidates or []):
-                    if not cand.content or not cand.content.parts:
-                        continue
-                    for part in cand.content.parts:
-                        if getattr(part, "text", None):
-                            yield TextDelta(text=part.text)
-                        if getattr(part, "function_call", None):
-                            fc = part.function_call
-                            tool_id = f"gemini-tc-{tool_idx}"
-                            tool_idx += 1
-                            yield ToolUseStart(tool_use_id=tool_id, name=fc.name)
-                            args_json = json.dumps(dict(fc.args or {}))
-                            yield ToolUseArgsDelta(tool_use_id=tool_id, partial_json=args_json)
-                            yield ToolUseEnd(tool_use_id=tool_id, name=fc.name, args=dict(fc.args or {}))
-                            stop_reason = "tool_use"
-                    if getattr(cand, "finish_reason", None) and stop_reason != "tool_use":
-                        stop_reason = "stop"
-            yield TurnEnd(reason=stop_reason)
+            try:
+                stop_reason = "stop"
+                tool_idx = 0
+                async for chunk in stream:
+                    if cancel.cancelled():
+                        yield TurnEnd(reason="cancelled")
+                        return
+                    for cand in (chunk.candidates or []):
+                        if not cand.content or not cand.content.parts:
+                            continue
+                        for part in cand.content.parts:
+                            if getattr(part, "text", None):
+                                yield TextDelta(text=part.text)
+                            if getattr(part, "function_call", None):
+                                fc = part.function_call
+                                tool_id = f"gemini-tc-{tool_idx}"
+                                tool_idx += 1
+                                yield ToolUseStart(tool_use_id=tool_id, name=fc.name)
+                                args_json = json.dumps(dict(fc.args or {}))
+                                yield ToolUseArgsDelta(tool_use_id=tool_id, partial_json=args_json)
+                                yield ToolUseEnd(tool_use_id=tool_id, name=fc.name, args=dict(fc.args or {}))
+                                stop_reason = "tool_use"
+                        if getattr(cand, "finish_reason", None) and stop_reason != "tool_use":
+                            stop_reason = "stop"
+                yield TurnEnd(reason=stop_reason)
+            finally:
+                aclose = getattr(stream, "aclose", None)
+                if aclose:
+                    await aclose()
         except asyncio.CancelledError:
             yield TurnEnd(reason="cancelled")
         except Exception as e:

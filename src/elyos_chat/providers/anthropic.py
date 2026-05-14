@@ -40,7 +40,7 @@ class AnthropicProvider:
         try:
             async with self._client.messages.stream(**kwargs) as stream:
                 pending_args: dict[str, list[str]] = {}
-                pending_meta: dict[str, dict] = {}
+                index_to_tool_id: dict[int, str] = {}
                 async for event in stream:
                     if cancel.cancelled():
                         yield TurnEnd(reason="cancelled")
@@ -50,16 +50,14 @@ class AnthropicProvider:
                         block = event.content_block
                         if block.type == "tool_use":
                             pending_args[block.id] = []
-                            pending_meta[block.id] = {"name": block.name}
+                            index_to_tool_id[event.index] = block.id
                             yield ToolUseStart(tool_use_id=block.id, name=block.name)
                     elif t == "content_block_delta":
                         d = event.delta
                         if d.type == "text_delta":
                             yield TextDelta(text=d.text)
                         elif d.type == "input_json_delta":
-                            # Anthropic's API attaches the tool_use_id via index;
-                            # use the latest pending one (single tool at a time is typical).
-                            tool_id = list(pending_args.keys())[-1] if pending_args else None
+                            tool_id = index_to_tool_id.get(event.index)
                             if tool_id is not None:
                                 pending_args[tool_id].append(d.partial_json)
                                 yield ToolUseArgsDelta(tool_use_id=tool_id, partial_json=d.partial_json)

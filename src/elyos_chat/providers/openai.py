@@ -37,8 +37,8 @@ class OpenAIProvider:
             stop_reason = "stop"
             async for chunk in stream:
                 if cancel.cancelled():
-                    yield TurnEnd(reason="cancelled")
                     await stream.close()
+                    yield TurnEnd(reason="cancelled")
                     return
                 if not chunk.choices:
                     continue
