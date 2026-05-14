@@ -37,6 +37,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from web.sessions import router as sessions_router  # noqa: E402
+
+app.include_router(sessions_router)
+
 # Routes registered in later tasks via app.include_router / direct decorators.
 
 # Static SPA mount — only if web-ui/dist exists. Vite dev server handles this in dev.
