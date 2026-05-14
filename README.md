@@ -63,3 +63,63 @@ scripts/
 tests/         four smoke test files + FakeProvider fixture
 docs/          spec, plan, API findings
 ```
+
+## Web UI
+
+A browser-based UI with streaming chat, sessions sidebar, and voice mode (STT + TTS + barge-in) backed by OpenAI Realtime.
+
+### Setup
+
+```bash
+# Backend (Python, reuses existing venv)
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# Frontend
+cd web-ui
+npm install
+cd ..
+```
+
+### Run (dev)
+
+```bash
+./scripts/run_web.sh
+# FastAPI on :8000, Vite on :5173 — open http://localhost:5173
+```
+
+### Run (production-style)
+
+```bash
+cd web-ui && npm run build && cd ..
+uvicorn web.server:app --port 8000
+# Open http://localhost:8000 (FastAPI serves the built SPA)
+```
+
+### Voice mode
+
+1. Set `OPENAI_API_KEY` in `.env` (Realtime API requires an OpenAI key regardless of which text provider is active).
+2. Click the mic icon in the top bar. Allow microphone access.
+3. Speak — Realtime's server-side VAD handles turn-taking. To interrupt the assistant mid-reply, just start talking ("barge-in").
+4. Press Esc once to cancel the current reply; press the stop button (or Esc twice within 2s) to exit voice mode.
+
+### Tests
+
+```bash
+# Backend
+pytest -v
+
+# Frontend
+cd web-ui && npm test
+```
+
+### Manual smoke (web)
+
+1. Text happy path — ask about weather, see tool spinner → result → streamed answer.
+2. Provider switch mid-session — change Anthropic → OpenAI in top bar, next turn uses OpenAI (check server logs).
+3. Cancel mid-stream — Esc during a long response.
+4. Resume from sidebar — refresh, click a session.
+5. Voice mode round-trip — toggle mic, ask aloud, hear answer.
+6. Voice barge-in — talk over the assistant; it stops.
+7. Voice tool call — say "research solar energy briefly"; spinner + result + spoken answer.
+8. WS drop recovery — kill server, send a message, restart server.
