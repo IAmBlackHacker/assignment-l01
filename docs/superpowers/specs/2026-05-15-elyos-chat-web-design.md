@@ -358,7 +358,7 @@ Top-bar mic icon shows red dot `🎙️●`. Each turn marked with 🎤 (user sp
 
 - Text: client sends `cancel` → server calls `ChatSession.cancel_current()` (existing primitive).
 - Voice: client sends `cancel` → server cancels shared `CancelToken` (interrupts any in-flight tool) AND sends `response.cancel` upstream.
-- **One Esc keypress** triggers cancel for active mode. **Two presses within 1 s** in voice mode exits voice mode (mirrors CLI "two Ctrl+C exits").
+- **One Esc keypress** triggers cancel for active mode. **Two presses within 2 s** in voice mode exits voice mode (mirrors CLI "two Ctrl+C exits within 2 s").
 
 ### 9.6 CSRF / origin
 
