@@ -29,7 +29,6 @@ type ServerEvent =
 interface Store {
   provider: "anthropic" | "openai" | "gemini";
   model: string | null;
-  ttsEnabled: boolean;
   voiceName: "alloy" | "verse" | "shimmer";
 
   mode: Mode;
@@ -40,7 +39,6 @@ interface Store {
 
   setProvider: (p: Store["provider"]) => void;
   setModel: (m: string | null) => void;
-  toggleTts: () => void;
   setSessions: (s: Session[]) => void;
   setSessionId: (id: string | null) => void;
   setMode: (m: Mode) => void;
@@ -55,7 +53,6 @@ interface Store {
 export const useStore = create<Store>((set, get) => ({
   provider: "gemini",
   model: null,
-  ttsEnabled: false,
   voiceName: "alloy",
 
   mode: "idle",
@@ -66,7 +63,6 @@ export const useStore = create<Store>((set, get) => ({
 
   setProvider: (provider) => set({ provider }),
   setModel: (model) => set({ model }),
-  toggleTts: () => set((s) => ({ ttsEnabled: !s.ttsEnabled })),
   setSessions: (sessions) => set({ sessions }),
   setSessionId: (sessionId) => set({ sessionId }),
   setMode: (mode) => set({ mode }),
