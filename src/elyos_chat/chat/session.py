@@ -18,8 +18,8 @@ MAX_TOOL_ITERATIONS = 8
 
 class Renderer(Protocol):
     def write(self, text: str) -> None: ...
-    def begin_tool(self, name: str) -> None: ...
-    def end_tool(self, name: str, result: dict) -> None: ...
+    def begin_tool(self, name: str, tool_id: str | None = None) -> None: ...
+    def end_tool(self, name: str, result: dict, tool_id: str | None = None) -> None: ...
     def show_error(self, msg: str) -> None: ...
     def turn_done(self) -> None: ...
 
@@ -72,7 +72,7 @@ class ChatSession:
                     self.renderer.write(ev.text)
                 elif isinstance(ev, ToolUseStart):
                     tool_names_seen[ev.tool_use_id] = ev.name
-                    self.renderer.begin_tool(ev.name)
+                    self.renderer.begin_tool(ev.name, tool_id=ev.tool_use_id)
                 elif isinstance(ev, ToolUseArgsDelta):
                     pass  # we use the parsed args from ToolUseEnd
                 elif isinstance(ev, ToolUseEnd):
@@ -125,7 +125,7 @@ class ChatSession:
                     "content": content,
                     "is_error": is_error,
                 })
-                self.renderer.end_tool(tc["name"], content)
+                self.renderer.end_tool(tc["name"], content, tool_id=tc["id"])
 
             self.history.append(Turn(role="tool", tool_results=tool_results))
 

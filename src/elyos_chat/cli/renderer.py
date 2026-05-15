@@ -23,7 +23,7 @@ class Renderer:
             self._has_written_text = True
         self.console.print(text, end="", soft_wrap=True, highlight=False)
 
-    def begin_tool(self, name: str) -> None:
+    def begin_tool(self, name: str, tool_id: str | None = None) -> None:
         self._end_text_line()
         self._spinner_live = Live(
             Spinner("dots", text=f"[yellow]calling tool: {name}…[/]"),
@@ -33,7 +33,7 @@ class Renderer:
         )
         self._spinner_live.start()
 
-    def end_tool(self, name: str, result: dict) -> None:
+    def end_tool(self, name: str, result: dict, tool_id: str | None = None) -> None:
         if self._spinner_live is not None:
             self._spinner_live.stop()
             self._spinner_live = None

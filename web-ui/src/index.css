@@ -3,11 +3,11 @@
 @tailwind utilities;
 
 :root {
-  --bg: 15 16 20;
-  --fg: 230 232 240;
-  --muted: 130 134 150;
-  --accent: 100 200 255;
-  --border: 36 38 48;
+  --bg: 250 250 252;
+  --fg: 24 26 32;
+  --muted: 100 105 120;
+  --accent: 37 99 235;
+  --border: 220 222 230;
 }
 
 html, body, #root { height: 100%; }

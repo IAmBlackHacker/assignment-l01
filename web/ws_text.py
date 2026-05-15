@@ -104,11 +104,20 @@ class WSRenderer:
     def write(self, text: str):
         self._q.put_nowait({"type": "text_delta", "text": text})
 
-    def begin_tool(self, name: str):
-        pass  # tool_use_start emitted from history tail after handle_user_input
+    def begin_tool(self, name: str, tool_id: str | None = None):
+        # Emit inline so the tool row interleaves with text deltas in real
+        # chronological order — assistant intro text, then tool spinner,
+        # then tool result, then final assistant text.
+        self._q.put_nowait({"type": "tool_use_start", "id": tool_id or name, "name": name})
 
-    def end_tool(self, name: str, result: dict):
-        pass  # tool_result emitted from history tail after handle_user_input
+    def end_tool(self, name: str, result: dict, tool_id: str | None = None):
+        self._q.put_nowait({
+            "type": "tool_result",
+            "id": tool_id or name,
+            "name": name,
+            "content": result,
+            "is_error": bool(isinstance(result, dict) and result.get("error")),
+        })
 
     def show_error(self, msg: str):
         self._q.put_nowait({"type": "error", "message": msg, "transient": False})
@@ -215,20 +224,11 @@ async def _run_turn(session: ChatSession, user_text: str, queue: asyncio.Queue, 
         except asyncio.CancelledError:
             pass
         # Drain whatever is still in the queue (drainer may not have run all items).
+        # Tool events are now emitted inline by WSRenderer.begin_tool/end_tool,
+        # so they interleave chronologically with text deltas.
         while not queue.empty():
             msg = queue.get_nowait()
             await ws.send_json(msg)
-        # Emit tool events from any new turns.
-        new_turns = session.history.snapshot()[pre_len:]
-        for turn in new_turns:
-            if turn.role == "assistant":
-                for tc in turn.tool_calls:
-                    await ws.send_json({"type": "tool_use_start", "id": tc["id"], "name": tc["name"]})
-                    await ws.send_json({"type": "tool_use_end", "id": tc["id"], "name": tc["name"], "args": tc["args"]})
-            elif turn.role == "tool":
-                for r in turn.tool_results:
-                    await ws.send_json({"type": "tool_result", "id": r["id"], "name": r["name"],
-                                        "content": r["content"], "is_error": r["is_error"]})
         reason = "stop"
         snap = session.history.snapshot()
         if snap:

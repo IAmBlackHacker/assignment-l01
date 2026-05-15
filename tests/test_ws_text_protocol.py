@@ -99,7 +99,6 @@ def test_tool_call_emits_canonical_events(client, monkeypatch):
                 break
         types = [m["type"] for m in captured]
         assert "tool_use_start" in types
-        assert "tool_use_end" in types
         assert "tool_result" in types
         tool_result = next(m for m in captured if m["type"] == "tool_result")
         assert tool_result["content"]["temp_c"] == 12

@@ -26,8 +26,8 @@ class SlowProvider:
 class NoOpRenderer:
     def __init__(self): self.text = ""
     def write(self, t): self.text += t
-    def begin_tool(self, n): pass
-    def end_tool(self, n, r): pass
+    def begin_tool(self, n, tool_id=None): pass
+    def end_tool(self, n, r, tool_id=None): pass
     def show_error(self, m): pass
     def turn_done(self): pass
 

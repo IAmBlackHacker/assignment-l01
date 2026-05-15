@@ -21,8 +21,8 @@ class CapturingRenderer:
     def __init__(self):
         self.events = []
     def write(self, text): self.events.append(("text", text))
-    def begin_tool(self, name): self.events.append(("tool_start", name))
-    def end_tool(self, name, result): self.events.append(("tool_end", name, result))
+    def begin_tool(self, name, tool_id=None): self.events.append(("tool_start", name))
+    def end_tool(self, name, result, tool_id=None): self.events.append(("tool_end", name, result))
     def show_error(self, msg): self.events.append(("error", msg))
     def turn_done(self): self.events.append(("turn_done",))
 
