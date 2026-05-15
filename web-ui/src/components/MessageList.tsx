@@ -1,4 +1,6 @@
 import { useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useStore } from "../state/store";
 import { ToolRow } from "./ToolRow";
 import { ScrollArea } from "./ui/scroll-area";
@@ -26,8 +28,10 @@ export function MessageList() {
           return (
             <div key={m.id} className="space-y-1">
               <div className="text-xs text-muted font-medium">assistant {m.voice && "🔊"}</div>
-              <div className="whitespace-pre-wrap">
-                {m.content}
+              <div className="prose prose-sm prose-invert max-w-none prose-pre:my-2 prose-pre:bg-bg/60 prose-pre:border prose-pre:border-border prose-code:before:content-none prose-code:after:content-none">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {m.content}
+                </ReactMarkdown>
                 {m.streaming && <span className="inline-block w-2 h-4 ml-0.5 bg-accent animate-pulse align-baseline" />}
                 {m.cancelled && <span className="ml-2 text-xs text-yellow-400">[cancelled]</span>}
               </div>
