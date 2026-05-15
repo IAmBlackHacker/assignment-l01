@@ -52,7 +52,7 @@ export function MessageList() {
           const m = block.message;
           return (
             <div key={m.id} className="space-y-1">
-              <div className="text-xs text-accent font-medium">you {m.voice && "🎤"}</div>
+              <div className="text-xs text-accent font-medium">You {m.voice && "🎤"}</div>
               <div className="whitespace-pre-wrap">{m.content}</div>
             </div>
           );
@@ -69,7 +69,7 @@ export function MessageList() {
         const isLastBlock = blockIdx === blocks.length - 1;
         return (
           <div key={`assistant-${block.messages[0].id}`} className="space-y-2">
-            <div className="text-xs text-muted font-medium">assistant {block.voice && "🔊"}</div>
+            <div className="text-xs text-muted font-medium">Assistant {block.voice && "🔊"}</div>
             {block.messages.map((m) => {
               if (m.role === "assistant") {
                 if (!m.content && !m.streaming) return null;
@@ -102,7 +102,7 @@ export function MessageList() {
       })}
       {!attachPendingToLast && pendingEntries.length > 0 && (
         <div className="space-y-2">
-          <div className="text-xs text-muted font-medium">assistant</div>
+          <div className="text-xs text-muted font-medium">Assistant</div>
           {pendingEntries.map(([id, t]) => (
             <ToolRow key={id} name={t.name} pending elapsed={Date.now() - t.startedAt} />
           ))}
