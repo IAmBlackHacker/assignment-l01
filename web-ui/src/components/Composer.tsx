@@ -45,7 +45,7 @@ export function Composer() {
         />
         <div className="flex items-center gap-1 pb-0.5 shrink-0">
           <Button
-            variant={inVoice ? "danger" : "ghost"}
+            variant={inVoice ? "danger" : "subtle"}
             size="icon"
             onClick={toggleVoice}
             title={inVoice ? "stop voice mode" : "start voice mode"}
