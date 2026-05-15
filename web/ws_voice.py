@@ -52,8 +52,11 @@ async def ws_voice(ws: WebSocket):
             history = History.resume(HISTORY_DIR, sid)
 
         tools_for_realtime = state.registry.for_openai() if state.registry else []
-        # Realtime expects flat function declarations, not wrapped in type:function.
-        tools_for_realtime = [t["function"] for t in tools_for_realtime] if tools_for_realtime else []
+        # GA Realtime expects {type: "function", name, description, parameters}.
+        tools_for_realtime = (
+            [{"type": "function", **t["function"]} for t in tools_for_realtime]
+            if tools_for_realtime else []
+        )
 
         upstream = await connect_realtime(voice, tools_for_realtime)
         await ws.send_json({"type": "session_started", "session_id": history.session_id})
@@ -126,13 +129,13 @@ async def _upstream_pump(
             await ws.send_json({"type": "speech_started"})
         elif t == "input_audio_buffer.speech_stopped":
             await ws.send_json({"type": "speech_stopped"})
-        elif t == "response.audio.delta":
+        elif t in ("response.audio.delta", "response.output_audio.delta"):
             pcm = base64.b64decode(ev["delta"])
             await ws.send_bytes(pcm)
-        elif t == "response.audio_transcript.delta":
+        elif t in ("response.audio_transcript.delta", "response.output_audio_transcript.delta"):
             assistant_buf.append(ev.get("delta", ""))
             await ws.send_json({"type": "transcript_assistant_delta", "text": ev.get("delta", "")})
-        elif t == "response.audio_transcript.done":
+        elif t in ("response.audio_transcript.done", "response.output_audio_transcript.done"):
             final = ev.get("transcript", "")
             # If deltas arrived, assistant_buf already has the full text.
             # If not (e.g., Realtime only sent the done event), use the final

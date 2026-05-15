@@ -15,7 +15,7 @@ from typing import AsyncIterator, Protocol
 import websockets
 
 
-DEFAULT_REALTIME_MODEL = os.environ.get("OPENAI_REALTIME_MODEL", "gpt-4o-realtime-preview-2024-12-17")
+DEFAULT_REALTIME_MODEL = os.environ.get("OPENAI_REALTIME_MODEL", "gpt-realtime")
 REALTIME_URL = f"wss://api.openai.com/v1/realtime?model={DEFAULT_REALTIME_MODEL}"
 
 
@@ -38,11 +38,10 @@ class OpenAIRealtimeWS:
 
     @classmethod
     async def connect(cls, voice: str = "alloy", tools: list[dict] | None = None) -> "OpenAIRealtimeWS":
+        # GA shape — the old beta header (OpenAI-Beta: realtime=v1) is rejected
+        # by current models with beta_api_shape_disabled. No beta header needed.
         api_key = os.environ["OPENAI_API_KEY"]
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "OpenAI-Beta": "realtime=v1",
-        }
+        headers = {"Authorization": f"Bearer {api_key}"}
         ws = await websockets.connect(
             REALTIME_URL,
             additional_headers=headers,
@@ -52,11 +51,18 @@ class OpenAIRealtimeWS:
         await self.send_json({
             "type": "session.update",
             "session": {
-                "voice": voice,
-                "input_audio_format": "pcm16",
-                "output_audio_format": "pcm16",
-                "input_audio_transcription": {"model": "whisper-1"},
-                "turn_detection": {"type": "server_vad"},
+                "type": "realtime",
+                "audio": {
+                    "input": {
+                        "format": {"type": "audio/pcm", "rate": 24000},
+                        "turn_detection": {"type": "server_vad"},
+                        "transcription": {"model": "whisper-1"},
+                    },
+                    "output": {
+                        "format": {"type": "audio/pcm", "rate": 24000},
+                        "voice": voice,
+                    },
+                },
                 "tools": tools or [],
                 "tool_choice": "auto",
             },
