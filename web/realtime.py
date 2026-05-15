@@ -2,7 +2,10 @@
 
 Defines an abstract RealtimeWS interface so the voice relay can be unit-tested
 with a FakeRealtimeWS. The real implementation connects to
-wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview
+wss://api.openai.com/v1/realtime?model=<model>
+
+Default model is a dated snapshot (the unversioned 'gpt-4o-realtime-preview'
+alias has been deprecated). Override with OPENAI_REALTIME_MODEL.
 """
 from __future__ import annotations
 import json
@@ -12,7 +15,8 @@ from typing import AsyncIterator, Protocol
 import websockets
 
 
-REALTIME_URL = "wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview"
+DEFAULT_REALTIME_MODEL = os.environ.get("OPENAI_REALTIME_MODEL", "gpt-4o-realtime-preview-2024-12-17")
+REALTIME_URL = f"wss://api.openai.com/v1/realtime?model={DEFAULT_REALTIME_MODEL}"
 
 
 class RealtimeWS(Protocol):

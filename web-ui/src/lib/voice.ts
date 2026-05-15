@@ -32,7 +32,16 @@ export class VoiceWS {
       }
     };
 
-    this.ws.onclose = () => this.cleanup();
+    this.ws.onclose = (e) => {
+      if (e.code !== 1000 && e.code !== 1005) {
+        useStore.getState().handleServerEvent({
+          type: "error",
+          message: `voice connection closed (code ${e.code}${e.reason ? ": " + e.reason : ""})`,
+          transient: false,
+        });
+      }
+      this.cleanup();
+    };
     this.ws.onerror = () => this.cleanup();
 
     useStore.getState().setMode("voice-active");
@@ -70,6 +79,7 @@ export class VoiceWS {
         break;
       case "error":
         console.error("voice error:", msg.message);
+        store.handleServerEvent({ type: "error", message: msg.message, transient: false });
         break;
     }
   }
