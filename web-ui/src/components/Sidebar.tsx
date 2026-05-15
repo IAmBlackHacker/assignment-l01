@@ -41,7 +41,7 @@ export function Sidebar() {
           <button
             key={s.id}
             onClick={() => pick(s.id)}
-            className={`block w-full text-left px-3 py-2 text-sm truncate hover:bg-border ${s.id === sessionId ? "bg-border" : ""}`}
+            className={`block w-full text-left px-3 py-2 text-sm truncate transition-colors hover:bg-fg/[0.06] ${s.id === sessionId ? "bg-fg/[0.10]" : ""}`}
           >
             <div className="truncate">{s.title || s.id}</div>
             <div className="text-xs text-muted">{new Date(s.updated_at * 1000).toLocaleString()} · {s.message_count} msgs</div>

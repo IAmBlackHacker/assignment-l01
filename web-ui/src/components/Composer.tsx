@@ -3,12 +3,14 @@ import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
 import { useStore } from "../state/store";
 import { textWs } from "../lib/ws";
-import { Send, Square } from "lucide-react";
+import { voiceWs } from "../lib/voice";
+import { Mic, Send, Square } from "lucide-react";
 
 export function Composer() {
   const [text, setText] = useState("");
   const mode = useStore((s) => s.mode);
   const streaming = mode === "text-streaming";
+  const inVoice = mode === "voice-active";
 
   function submit() {
     if (!text.trim()) return;
@@ -19,6 +21,11 @@ export function Composer() {
 
   function cancel() {
     textWs.cancel();
+  }
+
+  function toggleVoice() {
+    if (inVoice) voiceWs.stop();
+    else voiceWs.start(useStore.getState().sessionId ?? "last");
   }
 
   return (
@@ -34,6 +41,15 @@ export function Composer() {
         }}
         disabled={streaming}
       />
+      <Button
+        variant={inVoice ? "danger" : "ghost"}
+        size="icon"
+        onClick={toggleVoice}
+        title={inVoice ? "stop voice mode" : "start voice mode"}
+        disabled={streaming}
+      >
+        <Mic size={16} />
+      </Button>
       {streaming ? (
         <Button variant="danger" size="icon" onClick={cancel} title="cancel">
           <Square size={16} />

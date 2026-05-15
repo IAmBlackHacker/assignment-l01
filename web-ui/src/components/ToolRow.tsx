@@ -6,7 +6,7 @@ type Props = { name: string; pending: boolean; args?: any; result?: any; isError
 export function ToolRow({ name, pending, result, isError, elapsed }: Props) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="my-2 rounded-md border border-border bg-bg/50">
+    <div className="my-2 rounded-md border border-border bg-surface">
       <button onClick={() => setOpen((x) => !x)} className="flex items-center gap-2 w-full px-3 py-2 text-sm">
         {pending ? <Loader2 size={14} className="animate-spin text-amber-600" /> :
           isError ? <XCircle size={14} className="text-red-600" /> : <CheckCircle2 size={14} className="text-green-600" />}
