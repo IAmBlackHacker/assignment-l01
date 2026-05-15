@@ -52,11 +52,18 @@ class OpenAIRealtimeWS:
             "type": "session.update",
             "session": {
                 "type": "realtime",
+                "instructions": (
+                    "You are a helpful voice assistant. Always speak and write in English. "
+                    "You have two tools: weather (fast) and research (slow, 3-8 seconds). "
+                    "Prefer calling tools when the user asks about real-world facts. "
+                    "Tool errors are returned as JSON with 'error' and 'guidance' fields — "
+                    "read them and decide how to proceed."
+                ),
                 "audio": {
                     "input": {
                         "format": {"type": "audio/pcm", "rate": 24000},
                         "turn_detection": {"type": "server_vad"},
-                        "transcription": {"model": "whisper-1"},
+                        "transcription": {"model": "whisper-1", "language": "en"},
                     },
                     "output": {
                         "format": {"type": "audio/pcm", "rate": 24000},
