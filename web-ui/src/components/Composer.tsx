@@ -29,36 +29,41 @@ export function Composer() {
   }
 
   return (
-    <div className="border-t border-border p-3 flex items-end gap-2">
-      <Textarea
-        rows={2}
-        placeholder={streaming ? "[streaming — press Esc to cancel]" : "Ask anything…"}
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); }
-          if (e.key === "Escape" && streaming) cancel();
-        }}
-        disabled={streaming}
-      />
-      <Button
-        variant={inVoice ? "danger" : "ghost"}
-        size="icon"
-        onClick={toggleVoice}
-        title={inVoice ? "stop voice mode" : "start voice mode"}
-        disabled={streaming}
-      >
-        <Mic size={16} />
-      </Button>
-      {streaming ? (
-        <Button variant="danger" size="icon" onClick={cancel} title="cancel">
-          <Square size={16} />
-        </Button>
-      ) : (
-        <Button size="icon" onClick={submit} disabled={!text.trim()} title="send">
-          <Send size={16} />
-        </Button>
-      )}
+    <div className="border-t border-border p-3">
+      <div className="flex items-end gap-2 rounded-xl border border-border bg-bg/40 px-3 py-2 focus-within:ring-2 focus-within:ring-accent transition">
+        <Textarea
+          rows={2}
+          placeholder={streaming ? "[streaming — press Esc to cancel]" : "Ask anything…"}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); }
+            if (e.key === "Escape" && streaming) cancel();
+          }}
+          disabled={streaming}
+          className="flex-1 border-0 bg-transparent px-0 py-1 focus-visible:ring-0 leading-6"
+        />
+        <div className="flex items-center gap-1 pb-0.5 shrink-0">
+          <Button
+            variant={inVoice ? "danger" : "ghost"}
+            size="icon"
+            onClick={toggleVoice}
+            title={inVoice ? "stop voice mode" : "start voice mode"}
+            disabled={streaming}
+          >
+            <Mic size={16} />
+          </Button>
+          {streaming ? (
+            <Button variant="danger" size="icon" onClick={cancel} title="cancel">
+              <Square size={16} />
+            </Button>
+          ) : (
+            <Button size="icon" onClick={submit} disabled={!text.trim()} title="send">
+              <Send size={16} />
+            </Button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
