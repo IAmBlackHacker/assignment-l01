@@ -4,7 +4,7 @@ export type Mode = "idle" | "text-streaming" | "voice-active";
 
 export type Message = {
   id: string;
-  role: "user" | "assistant" | "tool";
+  role: "user" | "assistant" | "tool" | "error";
   content: string;
   toolCalls?: { id: string; name: string; args: any }[];
   toolResults?: { id: string; name: string; content: any; isError: boolean }[];
@@ -143,7 +143,17 @@ export const useStore = create<Store>((set, get) => ({
         get().endTurn(ev.reason === "cancelled");
         return;
       case "error":
-        if (!ev.transient) set({ mode: "idle" });
+        set({
+          mode: "idle",
+          messages: [
+            ...state.messages,
+            {
+              id: crypto.randomUUID(),
+              role: "error",
+              content: ev.message ?? "unknown error",
+            },
+          ],
+        });
         return;
     }
   },

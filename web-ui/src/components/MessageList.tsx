@@ -43,6 +43,14 @@ export function MessageList() {
             </div>
           );
         }
+        if (m.role === "error") {
+          return (
+            <div key={m.id} className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+              <span className="font-mono text-xs mr-2">[error]</span>
+              {m.content}
+            </div>
+          );
+        }
         return null;
       })}
       {Object.entries(pendingTools).map(([id, t]) => (
