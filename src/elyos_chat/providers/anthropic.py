@@ -97,7 +97,12 @@ class AnthropicProvider:
                         "name": tc["name"],
                         "input": tc["args"],
                     })
-                msgs.append({"role": "assistant", "content": blocks or [{"type": "text", "text": ""}]})
+                # Skip assistant turns with no blocks (failed/errored turns).
+                # Anthropic rejects empty text blocks and assistant messages
+                # with empty content arrays.
+                if not blocks:
+                    continue
+                msgs.append({"role": "assistant", "content": blocks})
             elif t.role == "tool":
                 blocks = [
                     {

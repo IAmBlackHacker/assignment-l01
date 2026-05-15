@@ -90,6 +90,12 @@ class OpenAIProvider:
             if t.role == "user":
                 msgs.append({"role": "user", "content": t.content})
             elif t.role == "assistant":
+                # Skip assistant turns with no content AND no tool_calls.
+                # These arise from failed/errored turns (e.g. provider auth
+                # error); OpenAI rejects messages with content=null and no
+                # tool_calls.
+                if not t.content and not t.tool_calls:
+                    continue
                 m = {"role": "assistant", "content": t.content or None}
                 if t.tool_calls:
                     m["tool_calls"] = [
