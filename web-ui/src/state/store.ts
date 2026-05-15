@@ -53,7 +53,7 @@ interface Store {
 }
 
 export const useStore = create<Store>((set, get) => ({
-  provider: "anthropic",
+  provider: "gemini",
   model: null,
   ttsEnabled: false,
   voiceName: "alloy",
