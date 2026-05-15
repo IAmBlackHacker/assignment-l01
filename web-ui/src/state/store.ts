@@ -16,7 +16,7 @@ export type Message = {
 export type Session = { id: string; title: string; updated_at: number; message_count: number };
 
 type ServerEvent =
-  | { type: "session_started"; session_id: string; created: boolean; resumed_turns?: number }
+  | { type: "session_started"; session_id: string; created: boolean; resumed_turns?: number; messages?: Message[] }
   | { type: "user_echo"; content: string; ts?: number }
   | { type: "text_delta"; text: string }
   | { type: "tool_use_start"; id: string; name: string }
@@ -99,7 +99,10 @@ export const useStore = create<Store>((set, get) => ({
     const state = get();
     switch (ev.type) {
       case "session_started":
-        set({ sessionId: ev.session_id });
+        set({
+          sessionId: ev.session_id,
+          messages: Array.isArray(ev.messages) ? ev.messages : [],
+        });
         return;
       case "user_echo":
         return;

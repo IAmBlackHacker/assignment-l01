@@ -22,6 +22,62 @@ from web.deps import HISTORY_DIR, state
 router = APIRouter()
 
 
+def _history_to_messages(history: History) -> list[dict]:
+    """Convert persisted turns to the UI's Message shape.
+
+    Reads the raw JSONL so voice=true stamps (added by ws_voice.py via direct
+    file rewrite, not via the Turn dataclass) survive resume.
+    """
+    out: list[dict] = []
+    path = history.path
+    if not path.exists():
+        return out
+    for i, line in enumerate(path.read_text(encoding="utf-8").splitlines()):
+        if not line.strip():
+            continue
+        try:
+            t = json.loads(line)
+        except ValueError:
+            continue
+        role = t.get("role")
+        ts = t.get("ts", i)
+        if role == "user":
+            out.append({
+                "id": f"u-{i}-{ts}",
+                "role": "user",
+                "content": t.get("content", ""),
+                "voice": bool(t.get("voice")),
+            })
+        elif role == "assistant":
+            # Skip pure tool-call assistant turns (no text content) — the tool
+            # row in the next tool turn renders the visible state.
+            content = t.get("content", "")
+            if content:
+                out.append({
+                    "id": f"a-{i}-{ts}",
+                    "role": "assistant",
+                    "content": content,
+                    "voice": bool(t.get("voice")),
+                    "cancelled": bool(t.get("cancelled")),
+                })
+        elif role == "tool":
+            out.append({
+                "id": f"t-{i}-{ts}",
+                "role": "tool",
+                "content": "",
+                "toolResults": [
+                    {
+                        "id": r.get("id", ""),
+                        "name": r.get("name", ""),
+                        "content": r.get("content", {}),
+                        "isError": bool(r.get("is_error")),
+                    }
+                    for r in t.get("tool_results", [])
+                ],
+            })
+    return out
+
+
 def build_provider(provider_name: str, model: Optional[str]):
     """Construct a real provider. Tests monkeypatch this to inject a FakeProvider."""
     if provider_name == "anthropic":
@@ -99,6 +155,7 @@ async def ws_text(ws: WebSocket):
             "session_id": history.session_id,
             "created": created,
             "resumed_turns": resumed,
+            "messages": _history_to_messages(history),
         })
 
         while True:
