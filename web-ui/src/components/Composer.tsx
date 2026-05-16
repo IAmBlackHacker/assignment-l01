@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
 import { useStore } from "../state/store";
@@ -11,6 +11,19 @@ export function Composer() {
   const mode = useStore((s) => s.mode);
   const streaming = mode === "text-streaming";
   const inVoice = mode === "voice-active";
+
+  // Disabled <textarea> does not receive keydown, so bind Escape globally while streaming.
+  useEffect(() => {
+    if (!streaming) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        textWs.cancel();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [streaming]);
 
   function submit() {
     if (!text.trim()) return;
@@ -38,7 +51,6 @@ export function Composer() {
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); }
-            if (e.key === "Escape" && streaming) cancel();
           }}
           disabled={streaming}
           className="flex-1 border-0 bg-transparent px-0 py-1 focus-visible:ring-0 leading-6"
